@@ -1,0 +1,273 @@
+                       --------------------------
+                       Supported Document Formats
+                       --------------------------
+
+~~ Licensed to the Apache Software Foundation (ASF) under one or more
+~~ contributor license agreements.  See the NOTICE file distributed with
+~~ this work for additional information regarding copyright ownership.
+~~ The ASF licenses this file to You under the Apache License, Version 2.0
+~~ (the "License"); you may not use this file except in compliance with
+~~ the License.  You may obtain a copy of the License at
+~~
+~~     http://www.apache.org/licenses/LICENSE-2.0
+~~
+~~ Unless required by applicable law or agreed to in writing, software
+~~ distributed under the License is distributed on an "AS IS" BASIS,
+~~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+~~ See the License for the specific language governing permissions and
+~~ limitations under the License.
+
+Supported Document Formats
+
+   This page lists all the document formats supported by Apache Tika.
+
+* Microsoft's OLE 2 Compound Document format
+
+   A number of Microsoft applications, most notably the Microsoft Office
+   suite, use the generic OLE 2 Compound Document format as the basis of
+   their document formats. Tika uses {{{http://poi.apache.org/}Apache POI}}
+   to support a number of these formats.
+
+   The OLE2 Compound Document format is designed for use with random access
+   files, and so the input stream passed to a Tika parser needs to be spooled
+   in memory or in a temporary file depending on the size of the document.
+   See {{{https://issues.apache.org/jira/browse/TIKA-153}TIKA-153}} for an
+   effort to avoid this extra temporary file if the input document already
+   comes from a file.
+
+   In addition to the shared base format there's also a shared sets of
+   metadata in typical OLE2 documents. Tika uses the
+   {{{http://poi.apache.org/hpsf/}HPSF library}} from POI to parse these
+   property sets and exposes them as the following document metadata:
+
+      * <<<TITLE>>> Title
+
+      * <<<SUBJECT>>> Subject
+
+      * <<<AUTHOR>>> Author
+
+      * <<<KEYWORDS>>> Keywords
+
+      * <<<COMMENTS>>> Comments
+
+      * <<<TEMPLATE>>> Template
+
+      * <<<LAST_SAVED>>> Last Saved By
+
+      * <<<REVISION_NUMBER>>> Revision Number
+
+      * <<<LAST_PRINTED>>> Last Printed
+
+      * <<<LAST_SAVED>>> Last Saved Time/Date
+
+      * <<<LAST_SAVED>>> Last Saved Time/Date
+
+      * <<<PAGE_COUNT>>> Number of Pages
+
+      * <<<WORD_COUNT>>> Number of Words
+
+      * <<<CHARACTER_COUNT>>> Number of Characters
+
+      * <<<APPLICATION_NAME>>> Name of Creating Application
+
+   Note that in practice the metadata in many documents is either missing,
+   incomplete or even incorrect, so a client application should not rely
+   too much on this information.
+
+   Support for the new Office Open XML format used by Microsoft Office
+   version 2007 is pending for a POI upgrade. Current status is recorded in
+   {{{https://issues.apache.org/jira/browse/TIKA-152}TIKA-152}}.
+
+   The generic OLE2 Compound Document format is automatically detected using
+   a magic number, and further parsing can automatically determine the more
+   specific document format. Tika also knows a number of common glob patterns
+   like <<<*.doc>>> and <<<*.ppt>>> for these formats.
+
+   The supported OLE 2 Compound Document formats are:
+
+   [Microsoft Excel (application/vnd.ms-excel)]
+    Excel spreadsheet support is available in all versions of Tika and is
+    based on the {{{http://poi.apache.org/hssf/}HSSF library}} from POI.
+
+    The Excel parser in Tika uses the
+    {{{http://poi.apache.org/hssf/how-to.html#event_api}HSSF event API}} and
+    is able to extract much of the document structure, including all
+    (non-empty) worksheets and their table structures. Formula results are
+    extracted as stored in the Excel file, and cell links are exposed as
+    XHTML links. These features were added in Tika version 0.2.
+
+    Cell comments and formatting are currently not supported. See
+    {{{https://issues.apache.org/jira/browse/TIKA-148}TIKA-148}} and
+    {{{https://issues.apache.org/jira/browse/TIKA-103}TIKA-103}} for the
+    respective issues.
+
+    See the {{{xref-test/org/apache/tika/parser/microsoft/ExcelParserTest.html}ExcelParserTest}}
+    test case for an example of parsing Microsoft Excel files.
+
+   [Microsoft Word (application/msword)]
+    Word document support is available in all versions of Tika and is based
+    on the {{{http://poi.apache.org/hwpf/}HWPF library}} from POI.
+
+    The Word parser uses the
+    {{{http://poi.apache.org/apidocs/org/apache/poi/hwpf/extractor/WordExtractor.html}WordExtractor}}
+    class from HWPF to extract document content as a sequence of paragraphs.
+
+    See the {{{xref-test/org/apache/tika/parser/microsoft/WordParserTest.html}WordParserTest}}
+    test case for an example of parsing Microsoft Word files.
+
+   [Microsoft PowerPoint (application/vnd.ms-powerpoint)]
+    PowerPoint presentation support is available in all versions of Tika and
+    is based on the {{{http://poi.apache.org/hslf/}HSLF library}} from POI.
+
+    The PowerPoint parser uses the
+    {{{http://poi.apache.org/apidocs/org/apache/poi/hslf/extractor/PowerPointExtractor.html}PowerPointExtractor}}
+    class from HSLF to extract spreadsheet content as a single paragraph.
+
+    See the {{{xref-test/org/apache/tika/parser/microsoft/PowerPointParserTest.html}PowerPointParserTest}}
+    test case for an example of parsing Microsoft PowerPoint files.
+
+   [Microsoft Visio (application/vnd.visio)]
+    Visio diagram support was added in Tika version 0.2 and is based on the
+    {{{http://poi.apache.org/hdgf/}HDGF library}} from POI.
+
+    The Visio parser uses the
+    {{{http://poi.apache.org/apidocs/org/apache/poi/hdgf/extractor/VisioTextExtractor.html}VisioExtractor}}
+    class from HDGF to extract diagram content as a sequence of paragraphs.
+
+   [Microsoft Outlook (application/vnd.ms-outlook)]
+    Outlook message support was added in Tika version 0.2 and is based on the
+    {{{http://poi.apache.org/hsmf/}HSMF library}} from POI.
+
+    The Outlook parser extracts the subject of the message and the From,
+    To, Cc, and Bcc addresses (formatted for display) along with the body
+    text of text/plain messages. The <<<AUTHOR>>>, <<<TITLE>>> and
+    <<<SUBJECT>>> metadata properties are set explicitly, overriding
+    potential generic document metadata retrieved from OLE2 property sets.
+
+* Compression formats
+
+   General purpose compression formats are used to reduce the size of
+   any kinds of documents. Tika uses a parsing pipeline to support general
+   purpose compression: in the first stage the compressed stream decompressed
+   and the resulting decompressed stream is passed on to a second parsing
+   stage where it will be processed as if the document had never been
+   compressed.
+
+   Tika contains magic numbers and glob patterns for auto-detecting all
+   supported compression formats. The glob patterns of compression formats
+   are also used to determine the name of the original uncompressed document.
+   If a client application has supplied a <<<RESOURCE_NAME_KEY>>> metadata
+   property that matches such a glob pattern, then the decompressing first
+   parsing stage will replace the <<<RESOURCE_NAME_KEY>>> metadata property
+   with the deduced original document name before passing control to the
+   second parsing stage.
+
+   Note that apart from the special handling of the <<<RESOURCE_NAME_KEY>>>
+   property, no document metadata is passed to or from the second parsing
+   stage. Only the text content extracted by the second stage parser is
+   returned to the client application.
+
+   The supported compression formats are:
+
+   [gzip compression (application/x-gzip)]
+    {{{http://en.wikipedia.org/wiki/Gzip}Gzip}} support was added in
+    Tika version 0.2 and is based on the
+    {{{http://java.sun.com/j2se/1.5.0/docs/api/java/util/zip/GZIPInputStream.html}GZIPInputStream}}
+    class in the Java 5 class library.
+
+    The known gzip glob patterns are <<<*.tgz>>>, <<<*.gz>>> and <<<*-gz>>>,
+    and they will respectively be replaced with <<<*.tar>>>, <<<*>>> and
+    <<<*>>> as described above.
+
+   [bzip2 compression (application/x-bzip)]
+    {{{http://en.wikipedia.org/wiki/Bzip2}Bzip2}} support was added in
+    Tika version 0.2 and is based on bzip2 parsing code from
+    {{{http://ant.apache.org/}Apache Ant}}, which in turn was originally
+    based on work by Keiron Liddle from Aftex Software.
+
+    The known bzip2 glob patterns are <<<*.tbz>>>, <<<*.tbz2>>>, <<<*.bz>>>
+    and <<<*.bz2>>>, and they will respectively be replaced with <<<*.tar>>>,
+    <<<*.tar>>>, <<<*>>> and <<<*>>> as described above.
+
+* Other supported formats
+
+   [Extensible Markup Language (application/xml)]
+    Tika uses the <<<javax.xml>>> classes to parse Extensible Markup Language files.
+    Support for Extensible Markup Language files was added in Tika 0.1.
+
+   [HyperText Markup Language (text/html)]
+    Tika uses the {{{http://sourceforge.net/projects/nekohtml}CyberNeko}} library to parse HyperText Markup Language files.
+    Support for HyperText Markup Language files was added in Tika 0.1.
+
+   [Images (image/*)]
+    Tika uses the <<<javax.imageio>>> classes to extract Metadata from Image files.
+    Support for Image files was added in Tika 0.2.
+
+   [Java class files]
+    The parsing of Java Class files is based on the asm library and work by Dave Brosius in JCR-1522.
+    Support for Java Class files was added in Tika 0.2.
+
+   [Java jar archives]
+    The parsing of Java JAR archives is performed using a combination of the ZIP and Java class file parsers.
+    Support for Java JAR archives was added in Tika 0.2.
+
+   [MP3 Audio (audio/mp3)]
+    The parsing of {{{http://www.id3.org/ID3v1}ID3v1}} tags from MP3 files was added in Tika version 0.2.
+    If found the following metadata is extracted and set:
+
+      * <<<TITLE>>> Title
+
+      * <<<SUBJECT>>> Subject
+
+    The above information, as well as the <<<Album>>>, <<<Track>>>, <<<Year>>>, <<<Genre>>>
+    and additional <<<Comment>>> are extracted when set in the file.
+
+   [OpenDocument (application/vnd.oasis.opendocument.*)]
+    TODO
+
+   [Plain text (text/plain)]
+    Tika uses the
+    {{{http://www.icu-project.org/}International Components for Unicode}}
+    Java library (ICU4J) to parse plain text. Support for plain text was added
+    in Tika 0.1.
+
+    Extracting text content from plain text files is actually a relatively
+    complex task due to the fact that the character encoding of the text
+    file is often unknown to the parser.
+
+    The text parser in Tika uses the ICU4J
+    {{{http://www.icu-project.org/apiref/icu4j/com/ibm/icu/text/CharsetDetector.html}CharsetDetector}}
+    class to automatically detect the character encoding of any text input.
+    As an added benefit, the ICU4J library is in some cases able to detect
+    also the language in which the text is written.
+
+    The character encoding and language of the plain text document are
+    returned as the <<<Metadata.CONTENT_ENCODING>>> and <<<Metadata.LANGUAGE>>>
+    metadata properties. If the (declared) content encoding of a text document
+    is already known to the client application, then it can be supplied as the
+    <<<Metadata.CONTENT_ENCODING>>> metadata property to the parser to
+    simplify encoding detection.
+
+   [Portable Document Format (application/pdf)]
+    Tika uses the {{{http://www.pdfbox.org}PDFBox}} library to parse
+    Portable Document Format (PDF) documents. Support for PDF was added
+    in Tika 0.1.
+
+   [Rich Text Format (application/rtf)]
+    Tika uses Java's built-in Swing library to parse Rich Text Format (RTF)
+    documents. Support for RTF was added in Tika 0.1.
+
+    The RTF parser in Tika uses the Swing
+    {{{http://java.sun.com/j2se/1.5.0/docs/api/javax/swing/text/rtf/RTFEditorKit.html}RTFEditorKit}}
+    class to extract all text from an RTF document as a single paragraph.
+    Document metadata extraction is currently not supported.
+
+   [tar archive (application/x-tar)]
+    Tika uses an adapted version of the tar parsing code from
+    {{{http://ant.apache.org/}Apache Ant}} to parse tar archives.
+    The tar code is originally based on work by Timothy Gerard Endres.
+    Support for tar archives was added in Tika 0.2.
+
+   [ZIP archive (application/zip)]
+    Tika uses Java's built-in Zip classes to parse ZIP files.
+    Support for ZIP was added in Tika 0.2.
